@@ -6,3 +6,6 @@ making changes on the readme-edits branch...
 making a commit message
 
 edit from git desktop
+
+edit from git command line
+
