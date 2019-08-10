@@ -1,7 +1,7 @@
 {
-  "name": "Getting Started Example",
+  "name": "Auto Attendance",
   "version": "1.0",
-  "description": "Build an Extension!",
+  "description": "Auto fill the attendance form.",
   "permissions": ["activeTab", "declarativeContent", "storage"],
   "options_page": "options.html",
   "background": {
