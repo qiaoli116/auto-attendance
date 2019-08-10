@@ -32,7 +32,8 @@ function initStatus() {
             "right": "0",
             "top": "105px",
             "bottom": "0",
-            "width": "300px",
+            "width": "auto",
+            "max-width": "800px",
             "background-color": "rgba(204, 238, 255, .8)",
             "z-index": "1000",
             "padding": "20px 10px 20px 30px"
