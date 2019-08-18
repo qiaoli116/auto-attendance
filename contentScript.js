@@ -24,6 +24,7 @@ switch (btn) {
 showStatus();
 
 function initStatus() {
+    // if the status div have not been created, created it.
     if($("#attPluginStatus").length == 0) {
         let divStatus = document.createElement("div");
         $(divStatus).attr("id", "attPluginStatus")
@@ -51,20 +52,36 @@ function showStatus() {
     let divStored = document.createElement("div");
     $(divStored).attr("class", "m-stored");
     if (attendanceDataLoaded != null) {
-        let dataArray = [];
+        dataArray2 = [];
         
         for (let key in attendanceDataLoaded) {
             if (attendanceDataLoaded.hasOwnProperty(key)) {
-                dataArray.push(
-                    "<li data-sort='" + attendanceDataLoaded[key].name[0] + " " + attendanceDataLoaded[key].name[1]+ "'>" + 
+                let obj = [
+                    attendanceDataLoaded[key].name[0] + "," + attendanceDataLoaded[key].name[1],
+                    "<li>" + 
                     key + " " + 
                     attendanceDataLoaded[key].name.join(" ") + " " +
-                    "(" + attendanceDataLoaded[key].ac_hour + "/" + attendanceDataLoaded[key].ab_hour + ") " +
-                    "</li>");
+                    "(" + attendanceDataLoaded[key].ac_hour + "/" + attendanceDataLoaded[key].ab_hour + ")" +
+                    "</li>"
+                ];                    
+                dataArray2.push(obj);
             }
         }
-        dataArray.sort();
-        $(divStored).html("<h4><strong>Data in storage</strong></h4><ol>"+dataArray.join("")+"</ol>");
+        // sort data Array by element[0] which is the full name "Last Name,First Name"
+        dataArray2.sort(function(a, b){
+            let aKey = a[0];
+            let bKey = b[0];
+            return aKey.toLowerCase().localeCompare(bKey.toLowerCase());
+        })
+        console.log(dataArray2);
+
+        let htmlLi = "";
+        dataArray2.forEach(function (item) {
+            htmlLi += item[1];
+        });
+        console.log(htmlLi);
+        
+        $(divStored).html("<h4><strong>Data in storage</strong></h4><ol>"+htmlLi+"</ol>");
 
     } else {
         $(divStored).html("<h4><strong>Data in storage</strong></h4><div>No data stored!</div>");
