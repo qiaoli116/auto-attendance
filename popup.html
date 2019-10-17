@@ -11,16 +11,30 @@
         white-space: nowrap;
         padding: 6px 10px;      
       }
-      .btn:hover {
+      .btn:not(.disabled):hover {
         background-color: #e0e0e0;
+      }
+      .btn.disabled{
+        cursor: default;
+      }
+      .divider {
+        height: 1px;
+        background-color: #4e4e4e;
       }
     </style>
   </head>
   <body>
+    <div class="btn disabled">--Attendance--</div>
     <div class="btn" id="storeData">Store Data</div>
     <div class="btn" id="fillData">Fill Data</div>
     <div class="btn" id="clearData">Clear Data</div>
     <div class="btn" id="displayData">Display Data</div>
+    <div class="divider"></div>
+    <div class="btn disabled">--Resulting--</div>
+    <div class="btn" id="resulting-storeData">Store Data</div>
+    <div class="btn" id="resulting-fillData">Fill Data</div>
+    <div class="btn" id="resulting-clearData">Clear Data</div>
+    <div class="btn" id="resulting-displayData">Display Data</div>
     <script src="popup.js"></script>
   </body>
 </html>

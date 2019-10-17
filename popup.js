@@ -9,6 +9,10 @@ let fillDataBtn = document.getElementById('fillData');
 let clearDataBtn = document.getElementById('clearData');
 let displayDataBtn = document.getElementById('displayData');
 
+let resulting_storeDataBtn = document.getElementById('resulting-storeData');
+let resulting_fillDataBtn = document.getElementById('resulting-fillData');
+let resulting_clearDataBtn = document.getElementById('resulting-clearData');
+let resulting_displayDataBtn = document.getElementById('resulting-displayData');
 /*
 chrome.storage.sync.get('color', function(data) {
   changeColor.style.backgroundColor = data.color;
@@ -19,6 +23,11 @@ storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
 clearDataBtn.onclick = action;
 displayDataBtn.onclick = action;
+
+resulting_storeDataBtn.onclick = action;
+resulting_fillDataBtn.onclick = action;
+resulting_clearDataBtn.onclick = action;
+resulting_displayDataBtn.onclick = action;
 
 function action(element) {
   //let color = element.target.value;
