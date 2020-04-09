@@ -379,7 +379,7 @@ function webexComments() {
                 console.log(acHour);
 
                 
-                if (parseInt(acHour) > 0) {
+                if (parseFloat(acHour) > 0) {
                     $(comment).val("WebEx attend");
                 }
     
