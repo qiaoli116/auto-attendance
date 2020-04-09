@@ -4,6 +4,7 @@
 
 'use strict';
 
+let webexCommentsBtn = document.getElementById('webexComments');
 let storeDataBtn = document.getElementById('storeData');
 let fillDataBtn = document.getElementById('fillData');
 let clearDataBtn = document.getElementById('clearData');
@@ -19,6 +20,7 @@ chrome.storage.sync.get('color', function(data) {
   changeColor.setAttribute('value', data.color);
 });
 */
+webexCommentsBtn.onclick = action;
 storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
 clearDataBtn.onclick = action;

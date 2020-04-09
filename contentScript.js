@@ -9,6 +9,10 @@ console.log("action: " + btn);
 initStatus();
 if (page == "Attendance Tracking"){
     switch (btn) {
+        case "webexComments":
+            webexComments();
+            storeData();
+            break;
         case "storeData":
             storeData();
             break;
@@ -351,4 +355,39 @@ function storeData() {
 }
 
 
+// function webexComments: set comments as "webex attend"
+function webexComments() {
+    // find the main attendance tracking table
+    let attendanceTable = $(".fieldlabeltext").parents("table");
+    if(attendanceTable.length > 0) {
+        // main attendance tracking table found
+        $(attendanceTable).find("tr").each(function(index, element){
+            //console.log(index);
+            //console.log(element);
+            let cellList = $(element).find("td.dbdefault");
+            if(cellList.length == 0) {
+                if (index == 0) {
+                    console.log("this row must be table header");
+                } else {
+                    console.log("Error: this is interesting");
+                }
+            } else if(cellList.length == 10) {
+                
+                let acHour = $(cellList[6]).find("input").val() ? $(cellList[6]).find("input").val() : 0;
+                let comment = $(cellList[9]).find("input");
 
+                console.log(acHour);
+
+                
+                if (parseInt(acHour) > 0) {
+                    $(comment).val("WebEx attend");
+                }
+    
+            } else {
+                console.log("Error: this is interesting");
+            }
+        });
+    } else {
+        console.log("Error: Table not found");
+    }
+}
