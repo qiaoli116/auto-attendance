@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 'use strict';
-// for dev_qiao
 let storeDataBtn = document.getElementById('storeData');
 let fillDataBtn = document.getElementById('fillData');
 let clearDataBtn = document.getElementById('clearData');
@@ -19,6 +18,7 @@ chrome.storage.sync.get('color', function(data) {
   changeColor.setAttribute('value', data.color);
 });
 */
+
 storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
 clearDataBtn.onclick = action;

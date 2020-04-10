@@ -55,7 +55,7 @@ function initStatus() {
             "top": "105px",
             "bottom": "0",
             "width": "auto",
-            "max-width": "800px",
+            "max-width": "1200px",
             "background-color": "rgba(204, 238, 255, .8)",
             "z-index": "1000",
             "padding": "20px 10px 20px 30px"
@@ -127,30 +127,41 @@ function showStatus() {
     if (attendanceDataLoaded != null) {
         dataArray2 = [];
         
-        for (let key in attendanceDataLoaded) {
-            if (attendanceDataLoaded.hasOwnProperty(key)) {
-                let obj = [
-                    attendanceDataLoaded[key].name[0] + "," + attendanceDataLoaded[key].name[1],
-                    "<li>" + 
-                    key + " " + 
-                    attendanceDataLoaded[key].name.join(", ") + " " +
-                    "(" + attendanceDataLoaded[key].ac_hour + "/" + attendanceDataLoaded[key].ab_hour + ")" +
-                    "</li>"
-                ];                    
-                dataArray2.push(obj);
+        for (let key_id in attendanceDataLoaded) {
+            if (attendanceDataLoaded.hasOwnProperty(key_id)) {
+                for(let key_date in attendanceDataLoaded[key_id]) {
+                    for (let key_start_time in attendanceDataLoaded[key_id][key_date]){
+                        let item = attendanceDataLoaded[key_id][key_date][key_start_time];
+                        let obj = [
+                            item.name[0] + "," + item.name[1],
+                            key_date,
+                            key_start_time,
+                            "<li>" + 
+                            key_id + " " + 
+                            key_date + " " +
+                            key_start_time + " " +
+                            item.name.join(", ") + " " +
+                            "(" + item.ac_hour + "/" + item.ab_hour + ")" +
+                            "</li>"
+                        ];                    
+                        dataArray2.push(obj);
+                    }
+                }
+                
             }
         }
         // sort data Array by element[0] which is the full name "Last Name,First Name"
         dataArray2.sort(function(a, b){
             let aKey = a[0];
             let bKey = b[0];
-            return aKey.toLowerCase().localeCompare(bKey.toLowerCase());
+            let r = aKey.toLowerCase().localeCompare(bKey.toLowerCase());
+            return r;
         })
         console.log(dataArray2);
 
         let htmlLi = "";
         dataArray2.forEach(function (item) {
-            htmlLi += item[1];
+            htmlLi += item[3];
         });
         console.log(htmlLi);
         
@@ -233,15 +244,22 @@ function fillData() {
                     }
                 } else if(cellList.length == 10) {
                     let id = cellList[1].innerText;
-                    if (id in attendanceDataLoaded) {
-                        $(cellList[6]).find("input").val(attendanceDataLoaded[id].ac_hour);
-                        $(cellList[7]).find("input").val(attendanceDataLoaded[id].ab_hour);
-                        $(cellList[8]).find("select").val(attendanceDataLoaded[id].auth_ab);
-                        $(cellList[9]).find("input").val(attendanceDataLoaded[id].comment);
-                        $(element).css({
-                            "background-color": "#e6ffee"
-                        });
+                    let date = cellList[3].innerText
+                    let startTime = cellList[4].innerText
+                    if (id in attendanceDataLoaded && 
+                        date in attendanceDataLoaded[id] && 
+                        startTime in attendanceDataLoaded[id][date]) {
+                        
+                            let item = attendanceDataLoaded[id][date][startTime];
+                            $(cellList[6]).find("input").val(item.ac_hour);
+                            $(cellList[7]).find("input").val(item.ab_hour);
+                            $(cellList[8]).find("select").val(item.auth_ab);
+                            $(cellList[9]).find("input").val(item.comment);
+                            $(element).css({
+                                "background-color": "#e6ffee"
+                            });
                     } else {
+
                         console.log("Error: student " + id + " not found!");
                         $(element).css({
                             "background-color": "#ffcccc"
@@ -319,19 +337,35 @@ function storeData() {
                 }
             } else if(cellList.length == 10) {
                 
+                // use id, date, startTime as key
                 let id = cellList[1].innerText;
+                let date = cellList[3].innerText
+                let startTime = cellList[4].innerText
+
                 let name = $(cellList[2]).find("a")[0].innerHTML.trim().split("<br>");
                 let acHour = $(cellList[6]).find("input").val() ? $(cellList[6]).find("input").val() : 0;
                 let abHour = $(cellList[7]).find("input").val() ? $(cellList[7]).find("input").val() : 0;
                 let authAb = $(cellList[8]).find("select").val();
                 let comment = $(cellList[9]).find("input").val();
-                //console.log(id);
-                //console.log(name);
-                //console.log(acHour);
-                //console.log(abHour);
-                //console.log(authAb);
-                //console.log(comment);
-                attendanceDataCurr[id] = {
+                console.log(id);
+                console.log(date);
+                console.log(startTime);
+                console.log(name);
+                console.log(acHour);
+                console.log(abHour);
+                console.log(authAb);
+                console.log(comment);
+
+                if (attendanceDataCurr[id] == null) {
+                    attendanceDataCurr[id] = {};
+                }
+                
+                if (attendanceDataCurr[id][date] == null) {
+                    attendanceDataCurr[id][date] = {};
+                }
+
+                
+                attendanceDataCurr[id][date][startTime] = {
                     name: name,
                     ac_hour: acHour,
                     ab_hour: abHour,
@@ -348,5 +382,6 @@ function storeData() {
     }
     console.log(attendanceDataCurr);
     localStorage.setItem("attendance_data", JSON.stringify(attendanceDataCurr));
+
 }
 
