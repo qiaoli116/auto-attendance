@@ -9,6 +9,13 @@ console.log("action: " + btn);
 initStatus();
 if (page == "Attendance Tracking"){
     switch (btn) {
+        case "webexComments":
+            webexComments();
+            storeData();
+            break;
+        case "smartFill":
+            smartFillData();
+            break;
         case "storeData":
             storeData();
             break;
@@ -382,6 +389,93 @@ function storeData() {
     }
     console.log(attendanceDataCurr);
     localStorage.setItem("attendance_data", JSON.stringify(attendanceDataCurr));
-
 }
 
+
+// function webexComments: set comments as "webex attend"
+function webexComments() {
+    // find the main attendance tracking table
+    let attendanceTable = $(".fieldlabeltext").parents("table");
+    if(attendanceTable.length > 0) {
+        // main attendance tracking table found
+        $(attendanceTable).find("tr").each(function(index, element){
+            //console.log(index);
+            //console.log(element);
+            let cellList = $(element).find("td.dbdefault");
+            if(cellList.length == 0) {
+                if (index == 0) {
+                    console.log("this row must be table header");
+                } else {
+                    console.log("Error: this is interesting");
+                }
+            } else if(cellList.length == 10) {
+                
+                let acHour = $(cellList[6]).find("input").val() ? $(cellList[6]).find("input").val() : 0;
+                let comment = $(cellList[9]).find("input");
+
+                console.log(acHour);
+
+                
+                if (parseFloat(acHour) > 0) {
+                    $(comment).val("WebEx attend");
+                }
+    
+            } else {
+                console.log("Error: this is interesting");
+            }
+        });
+    } else {
+        console.log("Error: Table not found");
+    }
+}
+
+
+// function smartFillData: get all attendance from local storage and set the form
+function smartFillData() {
+    // find the main attendance tracking table
+    let attendanceTable = $(".fieldlabeltext").parents("table");
+    if(attendanceTable.length > 0) {
+        // main attendance tracking table found
+        $(attendanceTable).find("tr").each(function(index, element){
+            //console.log(index);
+            //console.log(element);
+            let cellList = $(element).find("td.dbdefault");
+            if(cellList.length == 0) {
+                if (index == 0) {
+                    console.log("this row must be table header");
+                } else {
+                    console.log("Error: this is interesting");
+                }
+            } else if(cellList.length == 10) {
+                
+                // use id, date, startTime as key
+                let id = cellList[1].innerText;
+                let date = cellList[3].innerText
+                let startTime = cellList[4].innerText
+
+                let name = $(cellList[2]).find("a")[0].innerHTML.trim().split("<br>");
+                let expHour = $(cellList[5])[0].innerText;
+                let acHour = $(cellList[6]).find("input").val() ? $(cellList[6]).find("input").val() : 0;
+                let abHour = $(cellList[7]).find("input").val() ? $(cellList[7]).find("input").val() : 0;
+                let authAb = $(cellList[8]).find("select").val();
+                let comment = $(cellList[9]).find("input").val();
+                console.log(name + "/" + expHour + "/" + acHour + "/" + abHour + "/" + authAb);
+
+                if (authAb == "Y") {
+                    $(cellList[6]).find("input").val(expHour);
+                    $(cellList[7]).find("input").val("0");
+                } else {
+                    $(cellList[6]).find("input").val("0");
+                    $(cellList[7]).find("input").val(expHour);
+                }
+
+    
+            } else {
+                console.log("Error: this is interesting");
+            }
+        });
+    } else {
+        console.log("Error: Table not found");
+    }
+
+}

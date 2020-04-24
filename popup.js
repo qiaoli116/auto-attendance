@@ -3,6 +3,10 @@
 // found in the LICENSE file.
 
 'use strict';
+
+
+let smartFill = document.getElementById('smartFill');
+let webexCommentsBtn = document.getElementById('webexComments');
 let storeDataBtn = document.getElementById('storeData');
 let fillDataBtn = document.getElementById('fillData');
 let clearDataBtn = document.getElementById('clearData');
@@ -18,7 +22,8 @@ chrome.storage.sync.get('color', function(data) {
   changeColor.setAttribute('value', data.color);
 });
 */
-
+smartFill.onclick = action
+webexCommentsBtn.onclick = action;
 storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
 clearDataBtn.onclick = action;
