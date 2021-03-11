@@ -16,6 +16,9 @@ let resulting_storeDataBtn = document.getElementById('resulting-storeData');
 let resulting_fillDataBtn = document.getElementById('resulting-fillData');
 let resulting_clearDataBtn = document.getElementById('resulting-clearData');
 let resulting_displayDataBtn = document.getElementById('resulting-displayData');
+
+let scripting_createStudentFoldersBtn = document.getElementById('scripting-createStudentFolders');
+let scripting_csvResulting = document.getElementById('scripting-csv-resulting');
 /*
 chrome.storage.sync.get('color', function(data) {
   changeColor.style.backgroundColor = data.color;
@@ -34,6 +37,9 @@ resulting_fillDataBtn.onclick = action;
 resulting_clearDataBtn.onclick = action;
 resulting_displayDataBtn.onclick = action;
 
+scripting_createStudentFoldersBtn.onclick = action;
+scripting_csvResulting.onclick = action;
+
 function action(element) {
   //let color = element.target.value;
   console.log(element.target.id);
@@ -47,8 +53,12 @@ function action(element) {
         //file: 'contentScript.js'
       },
       function() {
-        chrome.tabs.executeScript(tabs[0].id, {file: 'jquery-3.4.1.min.js'}, function() {
-          chrome.tabs.executeScript(tabs[0].id, {file: 'contentScript.js'});
+        chrome.tabs.executeScript(tabs[0].id, {file: 'jszip.min.js'}, function() {
+          chrome.tabs.executeScript(tabs[0].id, {file: 'jquery-3.4.1.min.js'}, function() {
+            chrome.tabs.executeScript(tabs[0].id, {file: 'FileSaver.min.js'}, function() {
+              chrome.tabs.executeScript(tabs[0].id, {file: 'contentScript.js'});
+            });
+          });
         });
       }
     );

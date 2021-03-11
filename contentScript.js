@@ -48,8 +48,102 @@ if (page == "Attendance Tracking"){
             break;
     }
     showStatusResults();
+} else {
+
+    switch(btn) {
+        case "scripting-createStudentFolders":
+            studentFolders();
+            break;
+        case "scripting-csv-resulting":
+            csvResulting();
+            break;
+        default:
+            break;
+    }
 }
 
+function csvResulting() {
+    table = $(".d2l-table");
+    if (table[0]) {
+        console.log(table[0]);
+        rowList = $(table[0]).find("tr").not(".d2l-table-row-first");
+        console.log(rowList);
+        cvs = "";
+        rowList.each(function(i, e){
+            name = $(e).find("th").eq(0).find("a.d2l-link.d2l-link-inline").html();
+            [lname, fname] = name.split(", ")
+            console.log(lname + ", " + fname);
+
+            id = $(e).find("td").eq(3).find("label").html();
+            console.log(id);
+            cvs += id+","+lname+","+fname+"\n";
+        });
+        download("resulting.csv", cvs);
+    }
+}
+function studentFolders() {
+    table = $(".d2l-table");
+    if (table[0]) {
+        console.log(table[0]);
+        nameList = $(table[0]).find("th a.d2l-link.d2l-link-inline");
+    /*
+        pyArray = "[";
+        if ($(nameList).length > 0) {
+            nameList.each(function(i, e) {
+                console.log($(e).html());
+                if (i < $(nameList).length - 1) {
+                    pyArray += '"' + $(e).html() + '", ';
+                } else if(i == $(nameList).length - 1) {
+                    pyArray += '"' + $(e).html() + '"]';
+                }
+                
+            })
+        }
+
+        var py = `
+    import os
+
+    NameList = `+ pyArray +`
+    SysPath = os.path.dirname(os.path.realpath(__file__))
+    for Name in NameList:
+        NewPath = SysPath + "/" + Name
+        if not os.path.exists(NewPath):
+            os.makedirs(NewPath)
+    `;
+    */
+        //download("gen_folder.py_", py);
+        var zip = new JSZip();
+        if ($(nameList).length > 0) {
+            nameList.each(function(i, e) {
+                console.log($(e).html());
+                zip.folder($(e).html());
+                /*
+                zip.folder($(e).html()+"/at1");
+                zip.folder($(e).html()+"/at2");
+                */
+            })
+        }
+        
+        zip.generateAsync({type:"blob"}).then(function(content) {
+            // see FileSaver.js
+            saveAs(content, "students.zip");
+        });
+
+    }
+}
+
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+  
+    element.style.display = 'none';
+    document.body.appendChild(element);
+  
+    element.click();
+  
+    document.body.removeChild(element);
+  }
 
 function initStatus() {
     // if the status div have not been created, created it.
