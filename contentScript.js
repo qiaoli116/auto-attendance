@@ -68,7 +68,7 @@ function csvResulting() {
         console.log(table[0]);
         rowList = $(table[0]).find("tr").not(".d2l-table-row-first");
         console.log(rowList);
-        cvs = "";
+        cvs = "ID,Last Name,First Name,Full Name,Sorted Name\n";
         rowList.each(function(i, e){
             name = $(e).find("th").eq(0).find("a.d2l-link.d2l-link-inline").html();
             [lname, fname] = name.split(", ")
@@ -76,7 +76,9 @@ function csvResulting() {
 
             id = $(e).find("td").eq(3).find("label").html();
             console.log(id);
-            cvs += id+","+lname+","+fname+"\n";
+            fullname1 = fname + " " + lname;
+            fullname2 = "\"" + lname + ", " + fname + "\"";
+            cvs += id+","+lname+","+fname+","+fullname1+","+fullname2+"\n";
         });
         download("resulting.csv", cvs);
     }
