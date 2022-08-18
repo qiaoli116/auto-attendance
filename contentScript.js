@@ -12,25 +12,34 @@ if (page == "Attendance Tracking"){
         case "webexComments":
             webexComments();
             storeData();
+            showStatus();
             break;
         case "smartFill":
             smartFillData();
+            showStatus();
+            break;
+        case "uiEnhancement":
+            enhanceUIForAttendance();
             break;
         case "storeData":
             storeData();
+            showStatus();
             break;
         case "fillData":
             fillData();
+            showStatus();
             break;
         case "clearData":
             clearData();
+            showStatus();
             break;
         case "displayData":
+            showStatus();
             break;
         default:
             break;
     }
-    showStatus();
+    
 } else if(page == "Final Grades"){
     switch (btn) {
         case "resulting-storeData":
@@ -62,23 +71,201 @@ if (page == "Attendance Tracking"){
     }
 }
 
+
+function enhanceUIForAttendance(){
+    $('<style>').text(`
+    table.bordertable tr:hover {
+        background:#ddd!important;
+    }
+
+    table.bordertable tr[attendance="oncampus"] {
+        background:#a2f2ad;
+    }
+    table.bordertable tr[attendance="oncampus"]:hover {
+        background:#679c6e!important;
+    }
+    table.bordertable tr[attendance="oncampus"]:hover td:nth-of-type(2),
+    table.bordertable tr[attendance="oncampus"]:hover td:nth-of-type(3) {
+        background:#234728!important;
+        color: white!important;
+    }
+    table.bordertable tr[attendance="oncampus"]:hover td:nth-of-type(3) a {
+        color: white!important;
+    }
+
+    table.bordertable tr[attendance="online"] {
+        background:#759cf0;
+    }
+    table.bordertable tr[attendance="online"]:hover {
+        background:#6485cc!important;
+    }
+    table.bordertable tr[attendance="online"]:hover td:nth-of-type(2),
+    table.bordertable tr[attendance="online"]:hover td:nth-of-type(3) {
+        background:#364973!important;
+        color: white!important;
+    }
+    table.bordertable tr[attendance="online"]:hover td:nth-of-type(3) a {
+        color: white!important;
+    }
+
+    table.bordertable tr[attendance="absence"] {
+        background:#f59d9a;
+    }
+    table.bordertable tr[attendance="absence"]:hover {
+        background:#d98b89!important;
+    }
+    table.bordertable tr[attendance="absence"]:hover td:nth-of-type(2),
+    table.bordertable tr[attendance="absence"]:hover td:nth-of-type(3) {
+        background:#783d3c!important;
+        color: white!important;
+    }
+    table.bordertable tr[attendance="absence"]:hover td:nth-of-type(3) a {
+        color: white!important;
+    }
+
+    `).appendTo(document.head);
+    // find the main attendance tracking table
+    let attendanceTable = $(".fieldlabeltext").parents("table");
+    if(attendanceTable.length > 0) {
+        // main attendance tracking table found
+        $(attendanceTable).find("tr").each(function(index, element){
+            //console.log(index);
+            //console.log(element);
+            
+
+            let cellList = $(element).find("td.dbdefault");
+                
+                if(cellList.length == 0) {
+                    if (index == 0) {
+                        console.log("this row must be table header");
+                        var td1 = document.createElement('td');
+                        td1.classList.add("dbdefault");
+                        td1.innerHTML = `campus`;
+                        $(td1).css("background-color", "#a2f2ad");
+                        element.appendChild(td1);
+    
+                        var td2 = document.createElement('td');
+                        td2.classList.add("dbdefault");
+                        td2.innerHTML = `online`;
+                        $(td2).css("background-color", "#759cf0");
+                        element.appendChild(td2);
+    
+                        var td3 = document.createElement('td');
+                        td3.classList.add("dbdefault");
+                        td3.innerHTML = `absent`;
+                        $(td3).css("background-color", "#f59d9a");
+                        element.appendChild(td3);
+                    } else {
+                        console.log("Error: this is interesting");
+                    }
+                } else if(cellList.length == 10) {
+                    
+
+                    
+
+                    function oncampusClick(evt){
+                        
+                        let id = cellList[1].innerText;
+                        let date = cellList[3].innerText
+                        let startTime = cellList[4].innerText
+
+                        let name = $(cellList[2]).find("a")[0].innerHTML.trim().split("<br>");
+                        let expHour = $(cellList[5])[0].innerText;
+                        let acHour = $(cellList[6]).find("input").val() ? $(cellList[6]).find("input").val() : 0;
+                        let abHour = $(cellList[7]).find("input").val() ? $(cellList[7]).find("input").val() : 0;
+                        let authAb = $(cellList[8]).find("select").val();
+                        let comment = $(cellList[9]).find("input").val();
+                        console.log(name + "/" + expHour + "/" + acHour + "/" + abHour + "/" + authAb);
+
+
+                        console.log(evt);
+                        console.log(evt.target.value);
+                        let value = evt.target.value;
+                        switch(value){
+                            case "oncampus":
+                                $(cellList[6]).find("input").val(expHour);
+                                $(cellList[7]).find("input").val("0");
+                                $(cellList[8]).find("select").val("Y");
+                                $(cellList[9]).find("input").val("");
+                                $(element).attr("attendance", "oncampus");
+                                break;
+                            case "online":
+                                $(cellList[6]).find("input").val(expHour);
+                                $(cellList[7]).find("input").val("0");
+                                $(cellList[8]).find("select").val("Y");
+                                $(cellList[9]).find("input").val("R");
+                                $(element).attr("attendance", "online");
+                                break;
+                            case "absence":
+                                $(cellList[6]).find("input").val("0");
+                                $(cellList[7]).find("input").val(expHour);
+                                $(cellList[8]).find("select").val("N");
+                                $(cellList[9]).find("input").val("");
+                                $(element).attr("attendance", "absence");
+                                break;
+                            default:
+                                console.log("this is interesting");
+                                break;
+                        }
+                    }
+                    var td1 = document.createElement('td');
+                    td1.classList.add("dbdefault");
+                    td1.innerHTML = `
+                    <input type='radio' value='oncampus' name='group-${index}'>
+                    `;
+                    td1.addEventListener("input", oncampusClick);
+                    element.appendChild(td1);
+
+                    var td2 = document.createElement('td');
+                    td2.classList.add("dbdefault");
+                    td2.innerHTML = `
+                    <input type='radio' value='online' name='group-${index}'>
+                    `;
+                    td2.addEventListener("input", oncampusClick);
+                    element.appendChild(td2);
+
+                    var td3 = document.createElement('td');
+                    td3.classList.add("dbdefault");
+                    td3.innerHTML = `
+                    <input type='radio' value='absence' name='group-${index}'>
+                    `;
+                    td3.addEventListener("input", oncampusClick);
+                    element.appendChild(td3);
+
+                } else {
+                    console.log("Error: this is interesting");
+                }
+
+        });
+    } else {
+        console.log("Error: Table not found");
+    }
+    
+    return;
+}
+
+
 function csvResulting() {
-    table = $(".d2l-table");
+    let table = $(".d2l-table");
     if (table[0]) {
         console.log(table[0]);
-        rowList = $(table[0]).find("tr").not(".d2l-table-row-first");
+        let rowList = $(table[0]).find("tr").not(".d2l-table-row-first");
         console.log(rowList);
-        cvs = "ID,Last Name,First Name,Full Name,Sorted Name\n";
+        let cvs = "ID,User Name,HEmail,Last Name,First Name,Full Name,Sorted Name\n";
         rowList.each(function(i, e){
-            name = $(e).find("th").eq(0).find("a.d2l-link.d2l-link-inline").html();
-            [lname, fname] = name.split(", ")
+            let name = $(e).find("th").eq(0).find("a.d2l-link.d2l-link-inline").html();
+            let [lname, fname] = name.split(", ")
             console.log(lname + ", " + fname);
 
-            id = $(e).find("td").eq(3).find("label").html();
+            let id = $(e).find("td").eq(3).find("label").html();
             console.log(id);
-            fullname1 = fname + " " + lname;
-            fullname2 = "\"" + lname + ", " + fname + "\"";
-            cvs += id+","+lname+","+fname+","+fullname1+","+fullname2+"\n";
+
+            let username = $(e).find("td").eq(2).find("label").html();
+            console.log(username);
+
+            let fullname1 = fname + " " + lname;
+            let fullname2 = "\"" + lname + ", " + fname + "\"";
+            cvs += id+","+username+","+username+"@student.holmesglen.edu.au"+","+lname+","+fname+","+fullname1+","+fullname2+"\n";
         });
         download("resulting.csv", cvs);
     }
@@ -88,31 +275,7 @@ function studentFolders() {
     if (table[0]) {
         console.log(table[0]);
         nameList = $(table[0]).find("th a.d2l-link.d2l-link-inline");
-    /*
-        pyArray = "[";
-        if ($(nameList).length > 0) {
-            nameList.each(function(i, e) {
-                console.log($(e).html());
-                if (i < $(nameList).length - 1) {
-                    pyArray += '"' + $(e).html() + '", ';
-                } else if(i == $(nameList).length - 1) {
-                    pyArray += '"' + $(e).html() + '"]';
-                }
-                
-            })
-        }
-
-        var py = `
-    import os
-
-    NameList = `+ pyArray +`
-    SysPath = os.path.dirname(os.path.realpath(__file__))
-    for Name in NameList:
-        NewPath = SysPath + "/" + Name
-        if not os.path.exists(NewPath):
-            os.makedirs(NewPath)
-    `;
-    */
+    
         //download("gen_folder.py_", py);
         var zip = new JSZip();
         if ($(nameList).length > 0) {
@@ -488,7 +651,7 @@ function storeData() {
 }
 
 
-// function webexComments: set comments as "webex attend"
+// function webexComments: set comments as "R"
 function webexComments() {
     // find the main attendance tracking table
     let attendanceTable = $(".fieldlabeltext").parents("table");
@@ -513,7 +676,7 @@ function webexComments() {
 
                 
                 if (parseFloat(acHour) > 0) {
-                    $(comment).val("WebEx attend");
+                    $(comment).val("R");
                 }
     
             } else {

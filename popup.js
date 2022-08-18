@@ -5,8 +5,9 @@
 'use strict';
 
 
-let smartFill = document.getElementById('smartFill');
-let webexCommentsBtn = document.getElementById('webexComments');
+//let smartFill = document.getElementById('smartFill');
+//let webexCommentsBtn = document.getElementById('webexComments');
+let uiEnhancement = document.getElementById('uiEnhancement');
 let storeDataBtn = document.getElementById('storeData');
 let fillDataBtn = document.getElementById('fillData');
 let clearDataBtn = document.getElementById('clearData');
@@ -25,8 +26,9 @@ chrome.storage.sync.get('color', function(data) {
   changeColor.setAttribute('value', data.color);
 });
 */
-smartFill.onclick = action
-webexCommentsBtn.onclick = action;
+//smartFill.onclick = action
+//webexCommentsBtn.onclick = action;
+uiEnhancement.onclick = action;
 storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
 clearDataBtn.onclick = action;
