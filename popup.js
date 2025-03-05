@@ -1,12 +1,18 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-'use strict';
-
-
-//let smartFill = document.getElementById('smartFill');
-//let webexCommentsBtn = document.getElementById('webexComments');
+// Copyright 2023 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Initialize button with users' preferred color
+// const changeColor = document.getElementById('changeColor');
 let uiEnhancement = document.getElementById('uiEnhancement');
 let storeDataBtn = document.getElementById('storeData');
 let fillDataBtn = document.getElementById('fillData');
@@ -20,14 +26,8 @@ let resulting_displayDataBtn = document.getElementById('resulting-displayData');
 
 let scripting_createStudentFoldersBtn = document.getElementById('scripting-createStudentFolders');
 let scripting_csvResulting = document.getElementById('scripting-csv-resulting');
-/*
-chrome.storage.sync.get('color', function(data) {
-  changeColor.style.backgroundColor = data.color;
-  changeColor.setAttribute('value', data.color);
-});
-*/
-//smartFill.onclick = action
-//webexCommentsBtn.onclick = action;
+
+
 uiEnhancement.onclick = action;
 storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
@@ -42,29 +42,64 @@ resulting_displayDataBtn.onclick = action;
 scripting_createStudentFoldersBtn.onclick = action;
 scripting_csvResulting.onclick = action;
 
+
 function action(element) {
-  //let color = element.target.value;
-  console.log(element.target.id);
-
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.executeScript(
-      tabs[0].id,
-      {
-        //code: 'color = "' + color + '";',
-        code: 'btn = "' + element.target.id + '";'
-        //file: 'contentScript.js'
+  console.log("new plugin " + element.target.id);
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    // Use the Scripting API to execute a script
+    chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        files: ['jszip.min.js', 'jquery-3.4.1.min.js', 'FileSaver.min.js', 'contentScript.js']
       },
-      function() {
-        chrome.tabs.executeScript(tabs[0].id, {file: 'jszip.min.js'}, function() {
-          chrome.tabs.executeScript(tabs[0].id, {file: 'jquery-3.4.1.min.js'}, function() {
-            chrome.tabs.executeScript(tabs[0].id, {file: 'FileSaver.min.js'}, function() {
-              chrome.tabs.executeScript(tabs[0].id, {file: 'contentScript.js'});
-            });
-          });
-        });
-      }
-    );
-  });
-  //window.close();
-};
+      () => {
+        // Send the ID to contentScript.js
+        console.log("sendMessage: new plugin " + element.target.id);
+        chrome.tabs.sendMessage(tabs[0].id, { clickedId: element.target.id });
+      });
+    
 
+});
+  //window.close();
+}
+
+// changeColorButton.addEventListener('click', (event) => {
+//   const color = event.target.value;
+
+//   // Query the active tab before injecting the content script
+//   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//     // Use the Scripting API to execute a script
+//     chrome.scripting.executeScript({
+//       target: { tabId: tabs[0].id },
+//       args: [color],
+//       func: setColor
+//     });
+//   });
+// });
+
+// const changeColorButton = document.getElementById('changeColor');
+
+// // Retrieve the color from storage and update the button's style and value
+// chrome.storage.sync.get('color', ({ color }) => {
+//   changeColorButton.style.backgroundColor = color;
+//   changeColorButton.setAttribute('value', color);
+// });
+
+// changeColorButton.addEventListener('click', (event) => {
+//   const color = event.target.value;
+
+//   // Query the active tab before injecting the content script
+//   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//     // Use the Scripting API to execute a script
+//     chrome.scripting.executeScript({
+//       target: { tabId: tabs[0].id },
+//       args: [color],
+//       func: setColor
+//     });
+//   });
+// });
+
+// function setColor(color) {
+//   // There's a typo in the line below;
+//   // ❌ colors should be ✅ color.
+//   document.body.style.backgroundColor = color;
+// }

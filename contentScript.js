@@ -3,72 +3,89 @@
 // Retrieve
 //console.log("storage " + localStorage.getItem("lastname"));
 
-page = $("#pagetitle").html();
 
-console.log("action: " + btn);
-initStatus();
-if (page == "Attendance Tracking"){
-    switch (btn) {
-        case "webexComments":
-            webexComments();
-            storeData();
-            showStatus();
-            break;
-        case "smartFill":
-            smartFillData();
-            showStatus();
-            break;
-        case "uiEnhancement":
-            enhanceUIForAttendance();
-            break;
-        case "storeData":
-            storeData();
-            showStatus();
-            break;
-        case "fillData":
-            fillData();
-            showStatus();
-            break;
-        case "clearData":
-            clearData();
-            showStatus();
-            break;
-        case "displayData":
-            showStatus();
-            break;
-        default:
-            break;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.clickedId) {
+      const btn = message.clickedId;
+      console.log("Received ID in content script: " + btn);
+      // Now you can use receivedId in your content script
+      optionSelected(btn);
+    }
+    else{
+        console.log("No ID received in content script");
+    }
+});
+
+
+function optionSelected (btn) {
+    page = $("#pagetitle").html();
+
+    console.log("action: " + btn);
+    initStatus();
+    if (page == "Attendance Tracking"){
+        switch (btn) {
+            case "webexComments":
+                webexComments();
+                storeData();
+                showStatus();
+                break;
+            case "smartFill":
+                smartFillData();
+                showStatus();
+                break;
+            case "uiEnhancement":
+                enhanceUIForAttendance();
+                break;
+            case "storeData":
+                storeData();
+                showStatus();
+                break;
+            case "fillData":
+                fillData();
+                showStatus();
+                break;
+            case "clearData":
+                clearData();
+                showStatus();
+                break;
+            case "displayData":
+                showStatus();
+                break;
+            default:
+                break;
+        }
+        
+    } else if(page == "Final Grades"){
+        switch (btn) {
+            case "resulting-storeData":
+                storeResults();
+                break;
+            case "resulting-fillData":
+                fillDataResults();
+                break;
+            case "resulting-clearData":
+                clearDataResults();
+                break;
+            case "resulting-displayData":
+                break;
+            default:
+                break;
+        }
+        showStatusResults();
+    } else {
+    
+        switch(btn) {
+            case "scripting-createStudentFolders":
+                studentFolders();
+                break;
+            case "scripting-csv-resulting":
+                csvResulting();
+                break;
+            default:
+                break;
+        }
     }
     
-} else if(page == "Final Grades"){
-    switch (btn) {
-        case "resulting-storeData":
-            storeResults();
-            break;
-        case "resulting-fillData":
-            fillDataResults();
-            break;
-        case "resulting-clearData":
-            clearDataResults();
-            break;
-        case "resulting-displayData":
-            break;
-        default:
-            break;
-    }
-    showStatusResults();
-} else {
-
-    switch(btn) {
-        case "scripting-createStudentFolders":
-            studentFolders();
-            break;
-        case "scripting-csv-resulting":
-            csvResulting();
-            break;
-        default:
-            break;
-    }
 }
 
 

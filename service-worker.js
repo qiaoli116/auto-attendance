@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const buttonDiv = document.getElementById('buttonDiv');
-const buttonColors = ['#3aa757', '#e8453c', '#f9bb2d', '#4688f1'];
-
-const createColorButtons = (buttonColors) => {
-  buttonColors.forEach((color) => {
-    const button = document.createElement('button');
-    button.style.backgroundColor = color;
-
-    button.addEventListener('click', () => {
-      chrome.storage.sync.set({ color }, () => {
-        console.log(`color is ${color}`);
-      });
-    });
-
-    buttonDiv.appendChild(button);
+// There's a typo in the line below;
+// ❌ oninstalled should be ✅ onInstalled.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.sync.set({ color: '#3aa757' }, () => {
+    console.log('The background color is green.');
   });
-};
-
-createColorButtons(buttonColors);
+});
