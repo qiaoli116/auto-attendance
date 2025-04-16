@@ -136,7 +136,7 @@ function csvNetlab() {
 
             let fullname = fname + " " + lname;
             let sortedname = "\"" + lname + ", " + fname + "\"";
-            cvs += id+","+fullname+","+sortedname+","+email+"\n";
+            cvs += id+","+fullname+","+fullname+","+sortedname+","+email+"\n";
         });
         download(`netlab-class-list-${timeStamp}.csv`, cvs);
     }
