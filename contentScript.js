@@ -81,13 +81,66 @@ function optionSelected (btn) {
             case "scripting-csv-resulting":
                 csvResulting();
                 break;
+            case "scripting-csv-netlab":
+                csvNetlab();
+                break;
             default:
                 break;
         }
     }
     
 }
+function getFormattedTimestamp() {
+    const now = new Date();
+    
+    // Get date components
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    
+    // Get time components
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    // Get milliseconds (truncate to 5 digits)
+    const milliseconds = String(now.getMilliseconds()).padStart(3, '0').slice(0, 5);
+    
+    // Combine in desired format
+    return `${year}-${month}-${day}T${hours}-${minutes}-${seconds}_${milliseconds}`;
+}
 
+function csvNetlab() {
+    // timestamp format: 2023-10-12T14-30-00_12344
+    const timeStamp = getFormattedTimestamp();
+    console.log(timeStamp);
+    let table = $(".d2l-table");
+    if (table[0]) {
+        console.log(table[0]);
+        let rowList = $(table[0]).find("tr").not(".d2l-table-row-first");
+        console.log(rowList);
+        let cvs = "Username,Full Name,Display Name,Sorted Name,Email\n";
+        rowList.each(function(i, e){
+            let name = $(e).find("th").eq(0).find("a.d2l-link.d2l-link-inline").html();
+            let [lname, fname] = name.split(", ")
+            console.log(lname + ", " + fname);
+
+            let id = $(e).find("td").eq(3).find("label").html();
+            console.log(id);
+
+            let username = $(e).find("td").eq(2).find("label").html();
+            console.log(username);
+
+            let email = username + "@student.holmesglen.edu.au";
+            console.log(email);
+
+            let fullname = fname + " " + lname;
+            let sortedname = "\"" + lname + ", " + fname + "\"";
+            cvs += id+","+fullname+","+sortedname+","+email+"\n";
+        });
+        download(`netlab-class-list-${timeStamp}.csv`, cvs);
+    }
+}
 
 function enhanceUIForAttendance(){
     $('<style>').text(`

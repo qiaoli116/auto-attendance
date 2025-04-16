@@ -26,6 +26,7 @@ let resulting_displayDataBtn = document.getElementById('resulting-displayData');
 
 let scripting_createStudentFoldersBtn = document.getElementById('scripting-createStudentFolders');
 let scripting_csvResulting = document.getElementById('scripting-csv-resulting');
+let scripting_csvNetlab = document.getElementById('scripting-csv-netlab');
 
 
 uiEnhancement.onclick = action;
@@ -41,6 +42,7 @@ resulting_displayDataBtn.onclick = action;
 
 scripting_createStudentFoldersBtn.onclick = action;
 scripting_csvResulting.onclick = action;
+scripting_csvNetlab.onclick = action;
 
 
 function action(element) {
