@@ -17,6 +17,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 
+
 function optionSelected (btn) {
     page = $("#pagetitle").html();
 
@@ -84,12 +85,390 @@ function optionSelected (btn) {
             case "scripting-csv-netlab":
                 csvNetlab();
                 break;
+            case "scripting-insert-formular":
+                insertFormular();
+                break;
             default:
                 break;
         }
     }
     
 }
+
+
+
+
+function insertFormular() {
+    console.log("insertFormular() called");
+    const f = {
+        // Buttons (will be filled by function s)
+        "<<": null, "<": null, ">": null, ">>": null,
+        "Backspace": null, "Clear": null,
+        "7": null, "8": null, "9": null, "/": null,
+        "4": null, "5": null, "6": null, "*": null,
+        "1": null, "2": null, "3": null, "-": null,
+        "0": null, ".": null, "+": null,
+        "AND": null, "OR": null,
+        "(": null, ")": null, "=": null, "<>": null,
+        "<=": null, ">=": null,
+        "Insert": null,
+        "Start": null, "Next Term": null, "End": null,
+
+        // Selects (will be filled by functions 2–4)
+        "assessments-select": null,
+        "point-select": null,
+        "function-select": null
+    };
+
+    const iframe = document.querySelector('iframe[title="Formula Editor"]');
+    if (!iframe) {
+        console.error("Formula Editor iframe not found.");
+        //return;
+    }
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    if (!iframeDoc) {
+        console.error("Unable to access the content of the Formula Editor iframe.");
+        //return;
+    }
+
+    function getOptionValueByText(select, textMatch) {
+        const opt = Array.from(select.options).find(opt => opt.textContent.includes(textMatch));
+        return opt?.value;
+    }
+
+    function populateButtons() {
+        iframeDoc.querySelectorAll('.d_fe_control td.d_fe_button a, .d_fe_control td.d_fe_button_disabled a').forEach(a => {
+            const key = a.textContent.trim();
+            if (f.hasOwnProperty(key)) {
+            f[key] = a;
+            }
+        });
+    }
+
+    function populateAssessmentsSelect() {
+        const select = Array.from(iframeDoc.querySelectorAll('.d_fe_control select')).find(sel =>
+            Array.from(sel.options).some(opt => {
+                console.log(opt.textContent);
+                return opt.textContent.includes("Assessment One")})
+        );
+        console.log("select: " + select);
+
+        if (select) {
+            f["assessments-select"] = {
+                select,
+                options: {
+                    at1: getOptionValueByText(select, "Assessment One"),
+                    at2: getOptionValueByText(select, "Assessment Two")
+                },
+                selectAT1: function() {
+                    this.select.value = this.options.at1;
+                    this.select.dispatchEvent(new Event("change", { bubbles: true }));
+                },
+                selectAT2: function() {
+                    this.select.value = this.options.at2;
+                    this.select.dispatchEvent(new Event("change", { bubbles: true }));
+                },
+            };
+        }
+    }
+
+    function populatePointSelect() {
+        const select = Array.from(iframeDoc.querySelectorAll('.d_fe_control select')).find(sel =>
+            Array.from(sel.options).some(opt =>
+            ["Points Received", "Max Points", "Percent"].includes(opt.textContent.trim())
+            )
+        );
+
+        if (!select) return;
+
+        const ctrl = {
+            select,
+            options: {
+                pointsReceived: getOptionValueByText(select, "Points Received"),
+                maxPoints: getOptionValueByText(select, "Max Points"),
+                percent: getOptionValueByText(select, "Percent")
+            },
+            pointsReceived: function() {
+                this.select.value = this.options.pointsReceived;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            maxPoints: function() {
+                this.select.value = this.options.maxPoints;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            percent: function() {
+                this.select.value = this.options.percent;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+        };
+        f["point-select"] = ctrl;
+    }
+
+    function populateFunctionSelect() {
+        const select = Array.from(iframeDoc.querySelectorAll('.d_fe_control select')).find(sel =>
+            Array.from(sel.options).some(opt =>
+                ["MAX", "MIN", "SUM", "AVG", "IF", "NOT"].includes(opt.textContent.trim())
+            )
+        );
+
+        if (!select) return;
+
+        const ctrl = {
+            select,
+            options: {
+                max: getOptionValueByText(select, "MAX"),
+                min: getOptionValueByText(select, "MIN"),
+                sum: getOptionValueByText(select, "SUM"),
+                avg: getOptionValueByText(select, "AVG"),
+                if: getOptionValueByText(select, "IF"),
+                not: getOptionValueByText(select, "NOT")
+            },
+            max: function(){
+                this.select.value = this.options.max;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            min: function(){
+                this.select.value = this.options.min;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            sum: function(){
+                this.select.value = this.options.sum;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            avg: function(){
+                this.select.value = this.options.avg;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            if: function(){
+                this.select.value = this.options.if;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            },
+            not: function(){
+                this.select.value = this.options.not;
+                this.select.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+
+        };
+
+        f["function-select"] = ctrl;
+    }
+
+    function validateFormularCtrls() {
+        const missingKeys = Object.entries(f)
+            .filter(([key, value]) => value === null)
+            .map(([key]) => key);
+
+        if (missingKeys.length > 0) {
+            console.warn("❗ Missing control(s) in f:", missingKeys);
+            return false;
+        }
+
+        console.log("✅ All controls are populated in f.");
+        return true;
+    }
+
+    // Populate the controls
+    populateButtons();
+    populateAssessmentsSelect();
+    populatePointSelect();
+    populateFunctionSelect();
+
+    // Validate the controls
+    if (!validateFormularCtrls()) {
+        console.error("❗ Formular controls are not fully populated. Please check the implementation.");
+        //return;
+    }
+
+    function ifStart() {
+        // Click the Start button
+        f["function-select"].if(); // select IF function
+        f["Start"].click(); // click Start
+    }
+    function ifNextTerm() {
+        // Click the Next Term button
+        f["function-select"].if(); // select IF function
+        f["Next Term"].click(); // click Next Term
+    }
+    function ifEnd() {
+        // Click the End button
+        f["function-select"].if(); // select IF function
+        f["End"].click(); // click End
+    }
+
+    function at1PointsReceived() {
+        // Select Assessment One Points Received
+        f["assessments-select"].selectAT1(); // select Assessment One
+        f["point-select"].pointsReceived(); // select Points Received
+        f["Insert"].click(); // click Insert
+    }
+    function at2PointsReceived() {
+        // Select Assessment Two Points Received
+        f["assessments-select"].selectAT2(); // select Assessment Two
+        f["point-select"].pointsReceived(); // select Points Received
+        f["Insert"].click(); // click Insert
+    }
+
+    function at1PercentageReceived() {
+        // Select Assessment One Percentage Received
+        f["assessments-select"].selectAT1(); // select Assessment One
+        f["point-select"].percent(); // select Percent
+        f["Insert"].click(); // click Insert
+    }   
+    function at2PercentageReceived() {
+        // Select Assessment Two Percentage Received
+        f["assessments-select"].selectAT2(); // select Assessment Two
+        f["point-select"].percent(); // select Percent
+        f["Insert"].click(); // click Insert
+    }
+
+
+    // at1 or at2 is pending if points received = 0
+    function at1Pending() {
+        // Select Assessment One Points Received
+        f["("].click(); // click (
+        // at1PointsReceived(); // click Insert
+        at1PercentageReceived(); // click Insert
+        f["="].click(); // click =
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+    function at2Pending() {
+        // Select Assessment Two Points Received
+        f["("].click(); // click (
+        at2PercentageReceived(); // click Insert
+        f["="].click(); // click =
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+
+    // at 1 or 2 is n if 0 < points received < 2
+    function at1N() {
+        // Select Assessment Two Points Received
+        f["("].click(); // click (
+        // at1PointsReceived(); // click Insert
+        at1PercentageReceived(); // click Insert
+        f[">"].click(); // click <
+        f["0"].click(); // click 2
+        f["AND"].click(); // click AND
+        //at1PointsReceived(); // click Insert
+        at1PercentageReceived()
+        f["<"].click(); // click <
+        f["1"].click(); // click 1
+        f["0"].click(); // click 0
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+    function at2N() {
+        // Select Assessment Two Points Received
+        f["("].click(); // click (
+        at2PercentageReceived(); // click Insert
+        f[">"].click(); // click <
+        f["0"].click(); // click 2
+        f["AND"].click(); // click AND
+        at2PercentageReceived(); // click Insert
+        f["<"].click(); // click <
+        f["1"].click(); // click 1
+        f["0"].click(); // click 0
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+
+    function at1NOrPx() {
+        // Select Assessment Two Points Received
+        f["("].click(); // click (
+        at1PercentageReceived(); // click Insert
+        f[">"].click(); // click <
+        f["0"].click(); // click 2
+        f["AND"].click(); // click AND
+        at1PercentageReceived(); // click Insert
+        f["<="].click(); // click <
+        f["1"].click(); // click 1
+        f["0"].click(); // click 0
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+    function at2NOrPx() {
+        // Select Assessment Two Points Received
+        f["("].click(); // click (
+        at2PercentageReceived(); // click Insert
+        f[">"].click(); // click <
+        f["0"].click(); // click 2
+        f["AND"].click(); // click AND
+        at2PercentageReceived(); // click Insert
+        f["<="].click(); // click <
+        f["1"].click(); // click 1
+        f["0"].click(); // click 0
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+
+    // at1 or at2 is px if points received = 2
+
+    function at1Px() {
+        // Select Assessment One Points Received
+        f["("].click(); // click (
+        at1PercentageReceived(); // click Insert
+        f["="].click(); // click =
+        f["1"].click(); // click 1
+        f["0"].click(); // click 0
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+    function at2Px() {
+        // Select Assessment Two Points Received
+        f["("].click(); // click (
+        at2PercentageReceived(); // click Insert
+        f["="].click(); // click =
+        f["1"].click(); // click 1
+        f["0"].click(); // click 0
+        f["0"].click(); // click 0
+        f[")"].click(); // click )
+    }
+
+    // let's create a formular
+
+    ifStart(); // click Start
+        at1Pending(); f["AND"].click(); at2Pending(); // click Insert
+    ifNextTerm(); // click Next Term
+        f["1"].click(); // click 1
+    ifNextTerm(); // click Next Term
+        ifStart(); // click Start
+            f["("].click(); // click (
+                at1Pending(); f["AND"].click(); at2NOrPx(); // click Insert
+            f[")"].click(); // click )
+            f["OR"].click(); // click OR
+            f["("].click(); // click (
+                at1NOrPx(); f["AND"].click(); at2Pending(); // click Insert
+            f[")"].click(); // click )
+        ifNextTerm(); // click Next Term
+            f["2"].click(); // click 2
+        ifNextTerm(); // click Next Term
+            ifStart(); // click Start
+                f["("].click(); // click (
+                    at1N(); f["AND"].click(); at2NOrPx(); // click Insert
+                f[")"].click(); // click )
+                f["OR"].click(); // click OR
+                f["("].click(); // click (
+                    at1NOrPx(); f["AND"].click(); at2N(); // click Insert
+                f[")"].click(); // click )
+            ifNextTerm(); // click Next Term
+                f["4"].click(); // click 4
+            ifNextTerm(); // click Next Term
+                ifStart(); // click Start
+                    at1Px(); f["AND"].click(); at2Px(); // click Insert
+                ifNextTerm(); // click Next Term
+                    f["5"].click(); // click 5
+                ifNextTerm(); // click Next Term
+                    f["0"].click(); // click 0
+                ifEnd(); // click End
+            ifEnd(); // click End
+        ifEnd(); // click End
+    ifEnd(); // click End
+
+}   
+
+
+
 function getFormattedTimestamp() {
     const now = new Date();
     
