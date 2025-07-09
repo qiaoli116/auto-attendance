@@ -93,6 +93,7 @@ function optionSelected (btn) {
         }
     }
     
+
 }
 
 
@@ -123,12 +124,12 @@ function insertFormular() {
     const iframe = document.querySelector('iframe[title="Formula Editor"]');
     if (!iframe) {
         console.error("Formula Editor iframe not found.");
-        //return;
+        return;
     }
     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
     if (!iframeDoc) {
         console.error("Unable to access the content of the Formula Editor iframe.");
-        //return;
+        return;
     }
 
     function getOptionValueByText(select, textMatch) {
@@ -276,7 +277,7 @@ function insertFormular() {
     // Validate the controls
     if (!validateFormularCtrls()) {
         console.error("❗ Formular controls are not fully populated. Please check the implementation.");
-        //return;
+        return;
     }
 
     function ifStart() {
