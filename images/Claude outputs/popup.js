@@ -11,19 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Chrome has a known quirk (especially on Windows) where a freshly
-// opened extension popup only *focuses* the browser window on the
-// first click, without actually delivering that click to whatever
-// element is under the cursor - so buttons appear to need two clicks:
-// one to focus the popup, one to register. Explicitly focusing the
-// popup window as soon as it loads works around this, so the very
-// first click on a button is the one that fires it.
-window.focus();
-
 // Initialize button with users' preferred color
 // const changeColor = document.getElementById('changeColor');
 let uiEnhancement = document.getElementById('uiEnhancement');
-let storeCRNsBtn = document.getElementById('storeCRNs');
+let autoFillBtn = document.getElementById('autoFill');
 let storeDataBtn = document.getElementById('storeData');
 let fillDataBtn = document.getElementById('fillData');
 let clearDataBtn = document.getElementById('clearData');
@@ -41,7 +32,7 @@ let scripting_gradeFormula = document.getElementById('scripting-insert-formular'
 
 
 uiEnhancement.onclick = action;
-storeCRNsBtn.onclick = action;
+autoFillBtn.onclick = action;
 storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
 clearDataBtn.onclick = action;
@@ -57,25 +48,9 @@ scripting_csvResulting.onclick = action;
 scripting_csvNetlab.onclick = action;
 scripting_gradeFormula.onclick = action;
 
-// Clicking the version number shows the changelog - like every other
-// button, this runs through the normal action()/content-script flow so
-// the popup renders in the actual page (the main browser window),
-// not in this small extension menu.
-let showChangelogBtn = document.getElementById('showChangelog');
-if (showChangelogBtn) {
-  showChangelogBtn.onclick = action;
-} else {
-  console.error("showChangelog button not found - is popup.html out of date?");
-}
-
 
 function action(element) {
-  // use currentTarget (the .btn div the click handler is bound to),
-  // not target - the version button has a nested <i> that has no id
-  // of its own, so a click landing on that inner element made
-  // element.target.id come back empty and silently sent nothing.
-  let clickedId = element.currentTarget.id;
-  console.log("new plugin " + clickedId);
+  console.log("new plugin " + element.target.id);
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     // Use the Scripting API to execute a script
     chrome.scripting.executeScript({
@@ -84,10 +59,10 @@ function action(element) {
       },
       () => {
         // Send the ID to contentScript.js
-        console.log("sendMessage: new plugin " + clickedId);
-        chrome.tabs.sendMessage(tabs[0].id, { clickedId: clickedId });
+        console.log("sendMessage: new plugin " + element.target.id);
+        chrome.tabs.sendMessage(tabs[0].id, { clickedId: element.target.id });
       });
-
+    
 
 });
   //window.close();

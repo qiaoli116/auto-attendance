@@ -62,6 +62,10 @@ function optionSelected (btn) {
             case "uiEnhancement":
                 enhanceUIForAttendance();
                 break;
+            case "autoFill":
+                autoFillAttendance();
+                showStatus();
+                break;
             case "storeData":
                 storeData();
                 showStatus();
@@ -1282,7 +1286,7 @@ function showChangelog() {
             <li style="margin-bottom:6px;">Fixed bug that required two clicks to perform an action</li>
             <li style="margin-bottom:6px;">Added ability to select new CRN from Attendance Entry Page</li>
             <li style="margin-bottom:6px;">Added ability to "Select Store CRN's" from the CRN Selection Page</li>
-          </ul>
+        </ul>
     `);
 
     // reuse the same blue "Close" button style used on the status panel

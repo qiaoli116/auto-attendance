@@ -2,12 +2,18 @@
   "name": "Holmesglen Workflow Booster",
   "version": "1",
   "description": "Fix an Extension!",
-  "permissions": ["activeTab", "scripting", "storage", "webNavigation"],
-  "host_permissions": ["https://my.holmesglen.edu.au/*"],
+  "permissions": ["activeTab", "scripting", "storage"],
   "options_page": "options.html",
   "background": {
     "service_worker": "service-worker.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://my.holmesglen.edu.au/PROD/*"],
+      "js": ["jszip.min.js", "jquery-3.4.1.min.js", "FileSaver.min.js", "contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

@@ -4,25 +4,17 @@
 //console.log("storage " + localStorage.getItem("lastname"));
 
 
-// The popup re-injects this whole file on every single button click,
-// which would normally add a brand new onMessage listener each time -
-// so after a few clicks, one click ends up running optionSelected()
-// several times over (once per accumulated listener). Guard against
-// that by only ever registering the listener once per page.
-if (!window.__attPluginListenerRegistered) {
-    window.__attPluginListenerRegistered = true;
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.clickedId) {
-          const btn = message.clickedId;
-          console.log("Received ID in content script: " + btn);
-          // Now you can use receivedId in your content script
-          optionSelected(btn);
-        }
-        else{
-            console.log("No ID received in content script");
-        }
-    });
-}
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.clickedId) {
+      const btn = message.clickedId;
+      console.log("Received ID in content script: " + btn);
+      // Now you can use receivedId in your content script
+      optionSelected(btn);
+    }
+    else{
+        console.log("No ID received in content script");
+    }
+});
 
 
 
@@ -30,23 +22,6 @@ function optionSelected (btn) {
     page = $("#pagetitle").html();
 
     console.log("action: " + btn);
-
-    // the changelog isn't tied to any particular page (Attendance
-    // Tracking / Final Grades / scripting), so handle it before the
-    // page-specific switches below and stop there.
-    if (btn == "showChangelog") {
-        showChangelog();
-        return;
-    }
-
-    // storeCRNs runs on the "Select CRN" page, which is separate from
-    // Attendance Tracking / Final Grades / scripting pages, so - like
-    // the changelog - handle it up front and stop there.
-    if (btn == "storeCRNs") {
-        storeCRNs();
-        return;
-    }
-
     initStatus();
     if (page == "Attendance Tracking"){
         switch (btn) {
@@ -61,6 +36,10 @@ function optionSelected (btn) {
                 break;
             case "uiEnhancement":
                 enhanceUIForAttendance();
+                break;
+            case "autoFill":
+                autoFillAttendance();
+                showStatus();
                 break;
             case "storeData":
                 storeData();
@@ -123,248 +102,6 @@ function optionSelected (btn) {
 
 
 
-
-// function storeCRNs: reads every option out of the CRN dropdown on the
-// "Select CRN" page (select[name="c01"]) along with the page's hidden
-// PQRYCHKSUM value, and stores both to localStorage under "stored_crns"
-// as {crns: [{value, text}, ...], pqrychksum}, then flashes a brief
-// on-page confirmation. PQRYCHKSUM looks like a per-page-load integrity
-// token Banner expects back on submit, so it's captured alongside the
-// CRN list rather than the CRN list alone - a stale one likely won't be
-// accepted on a re-submit. This is just the "capture" half of carrying
-// this data to another page - it doesn't do anything with the stored
-// data yet.
-function storeCRNs() {
-    let select = $('select[name="c01"]');
-    if (select.length == 0) {
-        console.log("storeCRNs: CRN select (select[name=\"c01\"]) not found on this page");
-        flashMessage("CRN list not found on this page!", true);
-        return;
-    }
-
-    let crns = [];
-    select.find("option").each(function (i, opt) {
-        crns.push({
-            value: $(opt).val(),
-            text: $(opt).text().trim()
-        });
-    });
-
-    let chksum = $('input[name="PQRYCHKSUM"]').val();
-    if (!chksum) {
-        console.log("storeCRNs: PQRYCHKSUM field not found on this page");
-    }
-
-    localStorage.setItem("stored_crns", JSON.stringify({
-        crns: crns,
-        pqrychksum: chksum || null
-    }));
-    console.log(`storeCRNs: stored ${crns.length} CRN(s) and PQRYCHKSUM`, crns, chksum);
-    flashMessage(`Stored ${crns.length} CRN's!`);
-}
-
-// function storeCurrentQueryDates: on the Attendance Tracking entry
-// page (the page you land on after submitting a CRN + date range),
-// parses the "...Total Number of Records for CRN <b>54476</b> Term
-// <b>202620</b> From Date <b>14-SEP-2026</b> To Date <b>14-SEP-2026</b>
-// is <b>13</b>" summary cell and merges its From/To dates into the same
-// "stored_crns" localStorage object that "Store CRN's" (crns list) and
-// PQRYCHKSUM were captured into on the Select CRN page. That way,
-// switching CRNs via the injected "Select new CRN" button can resubmit
-// with the same date range already in view, without retyping it.
-// Positions below are based on the one sample cell we've seen - if
-// Banner ever adds/removes a <b> in that summary, these indexes will
-// need adjusting.
-function storeCurrentQueryDates() {
-    let summaryTd = $("td.dedefault").filter(function () {
-        return $(this).text().indexOf("Total Number of Records") !== -1;
-    }).first();
-
-    if (summaryTd.length == 0) {
-        console.log("storeCurrentQueryDates: summary cell (\"Total Number of Records...\") not found");
-        return null;
-    }
-
-    let bolds = summaryTd.find("b");
-    // 0: course title, 1: "NOTE: ", 2: CRN, 3: Term, 4: From Date, 5: To Date, 6: record count
-    if (bolds.length < 6) {
-        console.log("storeCurrentQueryDates: unexpected summary cell structure", summaryTd.html());
-        return null;
-    }
-
-    let fromDate = $(bolds[4]).text().trim();
-    let toDate = $(bolds[5]).text().trim();
-
-    let stored = JSON.parse(localStorage.getItem("stored_crns")) || {};
-    stored.fromDate = fromDate;
-    stored.toDate = toDate;
-    localStorage.setItem("stored_crns", JSON.stringify(stored));
-
-    console.log(`storeCurrentQueryDates: stored fromDate=${fromDate} toDate=${toDate}`);
-    return { fromDate, toDate };
-}
-
-// function submitNewCrn: submits the same query the Select CRN page's
-// form does (bwkkspgr.showpage?page=SC_ATTR_SELECTCRN...), but for a
-// different CRN - reusing the PQRYCHKSUM captured via "Store CRN's" and
-// the From/To dates captured via storeCurrentQueryDates() - so you can
-// jump straight to another CRN's attendance without going back to the
-// Select CRN page and retyping the date range. This builds a real
-// hidden <form> and calls the native submit() (a real POST/navigation),
-// not a background fetch - PQRYCHKSUM looks like a per-query integrity
-// token, and earlier testing showed the safe way to exercise this kind
-// of Banner form is to let the browser submit it for real rather than
-// replaying the POST ourselves.
-function submitNewCrn(crn) {
-    let stored = JSON.parse(localStorage.getItem("stored_crns"));
-    if (!stored || !stored.pqrychksum || !stored.fromDate || !stored.toDate) {
-        flashMessage("Missing stored CRN/date data - re-run \"Store CRN's\"!", true);
-        return;
-    }
-    if (!crn) {
-        flashMessage("No CRN selected!", true);
-        return;
-    }
-
-    let form = $("<form>").attr({
-        method: "POST",
-        action: "https://my.holmesglen.edu.au/PROD/bwkkspgr.showpage?page=SC_ATTR_SELECTCRN&pform=FORM1&pfrompage=SC_ATTR_SELECTCRN"
-    }).css("display", "none");
-
-    function addField(name, value) {
-        $("<input>").attr({ type: "hidden", name: name, value: value }).appendTo(form);
-    }
-
-    addField("pdataitems", "CRN");
-    addField("pdataitems", "FMDATE");
-    addField("pdataitems", "TODATE");
-    addField("PQRYCHKSUM", stored.pqrychksum);
-    addField("c01", crn);
-    addField("c02", stored.fromDate);
-    addField("c03", stored.toDate);
-    addField("PSUBMIT", "Submit");
-
-    $("body").append(form);
-    form[0].submit();
-}
-
-// function insertCrnSelect: adds a <select> reproducing the CRN list
-// captured earlier via "Store CRN's" (localStorage "stored_crns"), plus
-// a "Select new CRN" button to its right, right after the page title.
-// Anchors on #pagetitle - the same element optionSelected() already
-// reads elsewhere ($("#pagetitle").html() == "Attendance Tracking") to
-// detect this page. The server-rendered markup (view-source) just has
-// a plain <h2>Attendance Tracking</h2> with no id, but this page's own
-// scripts replace/re-tag that title client-side, so #pagetitle is only
-// found in the live DOM - matching against the raw h2 markup fails
-// since that element is gone by the time this runs. Options are built
-// via the DOM (not string-concatenated HTML) so text with special
-// characters like "&" round-trips correctly. No-op if the select is
-// already present, if #pagetitle can't be found, or if nothing's been
-// stored yet.
-function insertCrnSelect() {
-    if ($("#attPluginCrnSelect").length > 0) {
-        return;
-    }
-
-    let titleEl = $("#pagetitle");
-    if (titleEl.length == 0) {
-        console.log("insertCrnSelect: #pagetitle not found on this page");
-        return;
-    }
-
-    let stored = JSON.parse(localStorage.getItem("stored_crns"));
-    if (!stored || !stored.crns || stored.crns.length == 0) {
-        console.log("insertCrnSelect: no stored CRNs found - use \"Store CRN's\" on the Select CRN page first");
-        return;
-    }
-
-    let select = $("<select>").attr({ id: "attPluginCrnSelect", name: "c01" }).css({
-        "padding-top": "6px",
-        "padding-bottom": "6px"
-    });
-    stored.crns.forEach(function (crn) {
-        $("<option>").val(crn.value).text(crn.text).appendTo(select);
-    });
-
-    let submitBtn = $("<button>")
-        .attr({ type: "button", id: "attPluginCrnSubmitBtn" })
-        .text("Select new CRN")
-        .css({
-            "cursor": "pointer",
-            "margin-left": "8px",
-            "font-weight": "400",
-            "font-size": "14px",
-            "line-height": "1.5",
-            "color": "#fff",
-            "background-color": "#0d6efd",
-            "border": "1px solid #0d6efd",
-            "border-radius": "4px",
-            "padding": "6px 12px",
-            "box-shadow": "none",
-            "transition": "background-color .15s ease-in-out, border-color .15s ease-in-out"
-        });
-    submitBtn.on("mouseenter", function () {
-        $(this).css({ "background-color": "#0b5ed7", "border-color": "#0a58ca" });
-    });
-    submitBtn.on("mouseleave", function () {
-        $(this).css({ "background-color": "#0d6efd", "border-color": "#0d6efd" });
-    });
-    submitBtn.on("click", function () {
-        submitNewCrn(select.val());
-    });
-
-    // if #pagetitle is still sitting inside a <td> (as "Attendance
-    // Tracking" was in the server-rendered markup), add the select and
-    // button as a new <td> right after that one so it lines up with
-    // the title row; otherwise just drop them in right after the
-    // title element itself.
-    let titleTd = titleEl.closest("td");
-    if (titleTd.length > 0) {
-        let newTd = $("<td>").attr("class", "pldefault").append(select).append(submitBtn);
-        titleTd.after(newTd);
-    } else {
-        select.insertAfter(titleEl);
-        submitBtn.insertAfter(select);
-    }
-}
-
-// function flashMessage: shows a small transient message directly on the
-// page (not inside the extension's own popup menu, which closes as soon
-// as focus leaves it) that fades in, holds briefly, then fades out and
-// removes itself - roughly a 1 second flash overall. Pass isError=true
-// for a red variant instead of the default blue.
-function flashMessage(text, isError) {
-    $("#attPluginFlashMsg").stop(true, true).remove();
-
-    let msg = document.createElement("div");
-    $(msg).attr("id", "attPluginFlashMsg");
-    $(msg).text(text);
-    $(msg).css({
-        "position": "fixed",
-        "top": "20px",
-        "left": "50%",
-        "transform": "translateX(-50%)",
-        "z-index": "10002",
-        "background-color": isError ? "#f59d9a" : "#0d6efd",
-        "color": "#fff",
-        "font-size": "14px",
-        "font-weight": "bold",
-        "padding": "10px 18px",
-        "border-radius": "6px",
-        "box-shadow": "0 4px 12px rgba(0,0,0,.35)",
-        "opacity": "0"
-    });
-    $("body").append(msg);
-
-    $(msg).animate({ opacity: 1 }, 150, function () {
-        setTimeout(function () {
-            $(msg).animate({ opacity: 0 }, 300, function () {
-                $(msg).remove();
-            });
-        }, 1000);
-    });
-}
 
 function insertFormular() {
     console.log("insertFormular() called");
@@ -835,7 +572,7 @@ function autoFillAttendance() {
 
     let filledCount = 0;
     $(attendanceTable).find("tr").each(function(index, element){
-        let cellList = $(element).find("td.dbdefault").not(".att-enhance-col");
+        let cellList = $(element).find("td.dbdefault");
         if (cellList.length != 10) return;
 
         let id = cellList[1].innerText;
@@ -859,12 +596,9 @@ function autoFillAttendance() {
 
         let status = detectAttendanceStatus(stored.ac_hour, stored.ab_hour, stored.comment);
         if (status) {
-            // the "attendance" attribute alone drives the row's
-            // colour (via the stylesheet the enhancement injects) -
-            // no separate inline style, so hiding the enhancement can
-            // cleanly undo it later just by removing this attribute.
             $(element).attr("attendance", status);
             $(element).find(`input[type="radio"][value="${status}"]`).prop("checked", true);
+            $(element).css({ "background-color": "#e6ffee" });
             filledCount++;
         }
     });
@@ -886,41 +620,12 @@ function enhanceUIForAttendance(){
     let existingCols = $(attendanceTable).find("td.att-enhance-col");
     if (existingCols.length > 0) {
         if (existingCols.is(":visible")) {
-            // hiding: undo the row colouring the enhancement applied
-            // (the "attendance" attribute is what the injected
-            // stylesheet keys off), so the page looks exactly like it
-            // did before the enhancement was turned on.
             existingCols.hide();
-            $(attendanceTable).find("tr").removeAttr("attendance");
-            $("#attPluginCrnSelect").closest("td").hide();
         } else {
-            // showing again: nothing in the underlying fields changed
-            // while hidden, so just re-derive each row's colour from
-            // whatever is currently in them.
             existingCols.show();
-            $(attendanceTable).find("tr").each(function(index, element){
-                let cellList = $(element).find("td.dbdefault").not(".att-enhance-col");
-                if (cellList.length < 10) return;
-                let acHour = $(cellList[6]).find("input").val() ? $(cellList[6]).find("input").val() : 0;
-                let abHour = $(cellList[7]).find("input").val() ? $(cellList[7]).find("input").val() : 0;
-                let comment = $(cellList[9]).find("input").val();
-                let status = detectAttendanceStatus(acHour, abHour, comment);
-                if (status) {
-                    $(element).attr("attendance", status);
-                }
-            });
         }
-        $("#attPluginCrnSelect").closest("td").show();
         return;
     }
-
-    // capture this page's From/To dates (for "Select new CRN" to reuse),
-    // then add the CRN dropdown + submit button next to the page title,
-    // faithfully reproducing the list captured earlier via "Store CRN's"
-    // on the Select CRN page. Both are no-ops if already done / nothing
-    // to work with.
-    storeCurrentQueryDates();
-    insertCrnSelect();
 
     if ($("#attPluginEnhanceStyle").length == 0) {
         $('<style>').attr("id", "attPluginEnhanceStyle").text(`
@@ -1042,7 +747,7 @@ function enhanceUIForAttendance(){
             //console.log(element);
 
 
-            let cellList = $(element).find("td.dbdefault").not(".att-enhance-col");
+            let cellList = $(element).find("td.dbdefault");
 
                 if(cellList.length == 0) {
                     if (index == 0) {
@@ -1231,99 +936,6 @@ function download(filename, text) {
   
     document.body.removeChild(element);
   }
-
-// function showChangelog: shows the release changelog as a modal
-// injected into the actual page (the main browser window), the same
-// way the status panel is - not inside the small extension popup
-// menu, which closes as soon as focus leaves it. Clicking the version
-// number toggles it: a second click closes it again.
-function showChangelog() {
-    if ($("#attPluginChangelogOverlay").length > 0) {
-        $("#attPluginChangelogOverlay").remove();
-        return;
-    }
-
-    let overlay = document.createElement("div");
-    $(overlay).attr("id", "attPluginChangelogOverlay");
-    $(overlay).css({
-        "position": "fixed",
-        "top": "0",
-        "left": "0",
-        "right": "0",
-        "bottom": "0",
-        "background": "rgba(0,0,0,.45)",
-        "z-index": "10000",
-        "display": "flex",
-        "align-items": "center",
-        "justify-content": "center"
-    });
-
-    let box = document.createElement("div");
-    $(box).css({
-        "background": "#fff",
-        "color": "#222",
-        "width": "320px",
-        "max-width": "90%",
-        "border-radius": "6px",
-        "box-shadow": "0 4px 16px rgba(0,0,0,.35)",
-        "padding": "16px 18px",
-        "font-size": "14px"
-    });
-    $(box).html(`
-        <div style="margin-bottom:10px;">
-            <strong>Attendance updates in this release</strong>
-        </div>
-        <ul style="margin:0 0 14px 0;padding-left:18px;">
-            <li style="margin-bottom:6px;">Ability to select all students as online, campus or absent</li>
-            <li style="margin-bottom:6px;">Ability to hide the popups</li>
-            <li style="margin-bottom:6px;">Turning on enhancement auto fills rows where possible</li>
-            <li style="margin-bottom:6px;">Toggle enhancement visibility</li>
-            <li style="margin-bottom:6px;">Fixed bug where store data failed until after "Submit" pressed</li>
-            <li style="margin-bottom:6px;">Fixed bug that required two clicks to perform an action</li>
-            <li style="margin-bottom:6px;">Added ability to select new CRN from Attendance Entry Page</li>
-            <li style="margin-bottom:6px;">Added ability to "Select Store CRN's" from the CRN Selection Page</li>
-          </ul>
-    `);
-
-    // reuse the same blue "Close" button style used on the status panel
-    let closeWrap = document.createElement("div");
-    $(closeWrap).html("<button type='button'>Close</button>");
-    $(closeWrap).css({ "text-align": "right" });
-    let closeBtn = $(closeWrap).find("button");
-    closeBtn.css({
-        "cursor": "pointer",
-        "font-weight": "400",
-        "font-size": "14px",
-        "line-height": "1.5",
-        "color": "#fff",
-        "background-color": "#0d6efd",
-        "border": "1px solid #0d6efd",
-        "border-radius": "4px",
-        "padding": "6px 12px",
-        "box-shadow": "none",
-        "transition": "background-color .15s ease-in-out, border-color .15s ease-in-out"
-    });
-    closeBtn.on("mouseenter", function () {
-        $(this).css({ "background-color": "#0b5ed7", "border-color": "#0a58ca" });
-    });
-    closeBtn.on("mouseleave", function () {
-        $(this).css({ "background-color": "#0d6efd", "border-color": "#0d6efd" });
-    });
-    closeBtn.on("click", function () {
-        $(overlay).remove();
-    });
-    $(box).append(closeWrap);
-
-    $(overlay).append(box);
-    $("body").append(overlay);
-
-    // clicking the dimmed backdrop (not the box itself) also closes it
-    $(overlay).on("click", function (evt) {
-        if (evt.target === overlay) {
-            $(overlay).remove();
-        }
-    });
-}
 
 function initStatus() {
     // if the status div have not been created, created it.
@@ -1553,7 +1165,7 @@ function fillData() {
         if(attendanceTable.length > 0) {
             // main attendance tracking table found
             $(attendanceTable).find("tr").each(function(index, element){
-                let cellList = $(element).find("td.dbdefault").not(".att-enhance-col");
+                let cellList = $(element).find("td.dbdefault");
                 
                 if(cellList.length == 0) {
                     if (index == 0) {
@@ -1647,7 +1259,7 @@ function storeData() {
         $(attendanceTable).find("tr").each(function(index, element){
             //console.log(index);
             //console.log(element);
-            let cellList = $(element).find("td.dbdefault").not(".att-enhance-col");
+            let cellList = $(element).find("td.dbdefault");
             if(cellList.length == 0) {
                 if (index == 0) {
                     console.log("this row must be table header");
@@ -1713,7 +1325,7 @@ function webexComments() {
         $(attendanceTable).find("tr").each(function(index, element){
             //console.log(index);
             //console.log(element);
-            let cellList = $(element).find("td.dbdefault").not(".att-enhance-col");
+            let cellList = $(element).find("td.dbdefault");
             if(cellList.length == 0) {
                 if (index == 0) {
                     console.log("this row must be table header");
@@ -1751,7 +1363,7 @@ function smartFillData() {
         $(attendanceTable).find("tr").each(function(index, element){
             //console.log(index);
             //console.log(element);
-            let cellList = $(element).find("td.dbdefault").not(".att-enhance-col");
+            let cellList = $(element).find("td.dbdefault");
             if(cellList.length == 0) {
                 if (index == 0) {
                     console.log("this row must be table header");

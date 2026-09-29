@@ -23,7 +23,7 @@ window.focus();
 // Initialize button with users' preferred color
 // const changeColor = document.getElementById('changeColor');
 let uiEnhancement = document.getElementById('uiEnhancement');
-let storeCRNsBtn = document.getElementById('storeCRNs');
+let autoFillBtn = document.getElementById('autoFill');
 let storeDataBtn = document.getElementById('storeData');
 let fillDataBtn = document.getElementById('fillData');
 let clearDataBtn = document.getElementById('clearData');
@@ -41,7 +41,7 @@ let scripting_gradeFormula = document.getElementById('scripting-insert-formular'
 
 
 uiEnhancement.onclick = action;
-storeCRNsBtn.onclick = action;
+autoFillBtn.onclick = action;
 storeDataBtn.onclick = action;
 fillDataBtn.onclick = action;
 clearDataBtn.onclick = action;
